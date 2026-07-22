@@ -17,16 +17,25 @@ MCP tools. A set of Claude Code skills.
 
 ## Install
 
-Copy the skill folders into your Claude Code user skills directory:
+**Windows** — `.\install.ps1` from a clone, or with no clone at all:
+
+```powershell
+irm https://raw.githubusercontent.com/jacoblangston/kmad/main/install.ps1 | iex
+```
+
+It copies the skills, then offers two opt-in plugins: **fizzy.do** (card tracking —
+prompts for your token) and **Azure** (Azure MCP server, auth inherited from
+`az login`). Both default to no; missing prereqs are offered via winget or choco.
+Switches for an unattended run: `-Force -Fizzy -FizzyToken <t> -Azure -Subscription <id> -InstallPrereqs`.
+
+**macOS / Linux**:
 
 ```sh
 cp -r skills/* ~/.claude/skills/
+npx fizzy-do-mcp@latest configure   # optional: card tracking
 ```
 
 Then in Claude Code, invoke with `/kmad` (or `/kmad-story`, `/kmad-dev`, etc.).
-
-Card tracking uses the fizzy.do MCP server (`fizzy_*` tools). Set it up with
-`npx fizzy-do-mcp@latest configure` and register it in your user-level MCP config.
 
 ## Start here
 
