@@ -5,7 +5,7 @@ description: 'KMAD (Kanban Minimal AI Development) overview and getting-started 
 
 # KMAD — Kanban Minimal AI Development
 
-Small process for a solo dev: no sprints, continuous Kanban, fizzy.do as the ONLY tracker.
+Small process for a solo dev: no sprints, continuous Kanban, fizzy.do as the only tracker.
 Docs live in the repo; cards live in fizzy via the `fizzy_*` MCP tools directly.
 No separate sync layer between story files and the board.
 
