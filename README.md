@@ -1,9 +1,9 @@
 # KMAD — Kanban Minimal AI Development
 
 KMAD is Kanban Minimal AI Development: continuous Kanban for one person building
-with an AI agent. No sprints. [fizzy.do](https://fizzy.do) is the only tracker.
-Docs live in the repo. Cards live on the board through the `fizzy_*` MCP tools.
-The method ships as a set of Claude Code skills.
+with an AI agent. No sprints. The tracker is [fizzy.do](https://fizzy.do) or
+Azure DevOps, whichever you configure. Docs live in the repo. Cards live on
+that board. The method ships as a set of Claude Code skills.
 
 ## Skills
 

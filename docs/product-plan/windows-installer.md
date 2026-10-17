@@ -39,7 +39,6 @@ Azure path at all. A Windows user has to reverse-engineer the install from the R
 - Installing Claude Code itself — if it's absent, the user isn't here yet.
 - Binding a project to a fizzy board — that's `/kmad` init, and it's per-project, not per-machine.
 - Credential vaults, DPAPI, service principals. Fizzy owns its token file; Azure owns its own cache.
-- Azure DevOps, any second tracker.
 
 ## Install questions
 Every prompt has a switch that pre-answers it; supply all of them and the run is silent.
