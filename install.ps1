@@ -1,7 +1,7 @@
 <#
 .SYNOPSIS
-  Installs the KMAD skills for Claude Code, with an optional blank workspace,
-  optional game-development party seats, and optional fizzy.do and Azure plugins.
+  Installs the KMAD skills for Claude, Grok, or OpenAI, with an optional blank
+  workspace, optional game-development party seats, and optional fizzy.do and Azure plugins.
 .EXAMPLE
   .\install.ps1
 .EXAMPLE
@@ -13,6 +13,7 @@
 [CmdletBinding()]
 param(
   [ValidateSet('user', 'project')][string]$Scope = 'user',
+  [Alias('Agents')][string[]]$AgentList,
   [switch]$Force,
   [switch]$Games,
   [switch]$Workspace,
@@ -63,6 +64,41 @@ function Get-RepoRoot {
 }
 
 function Get-SkillSource { Join-Path (Get-RepoRoot) 'skills' }
+
+function Get-SkillDest {
+  param([string]$Agent, [ValidateSet('user', 'project')][string]$Scope = 'user')
+  $folder = switch ($Agent) {
+    'claude' { '.claude\skills' }
+    'grok'   { '.grok\skills' }
+    'openai' { '.agents\skills' }
+    default  { throw "Unknown agent '$Agent'. Use claude, grok, or openai." }
+  }
+  $root = if ($Scope -eq 'project') { (Get-Location).Path } else { $env:USERPROFILE }
+  Join-Path $root $folder
+}
+
+function Resolve-Agents {
+  param([string[]]$Requested)
+  $known = @('claude', 'grok', 'openai')
+  if (-not $Requested -or @($Requested).Count -eq 0) {
+    # ponytail: a non-interactive run with no -Agents keeps the old default, Claude.
+    if (-not [Environment]::UserInteractive) { return @('claude') }
+    $entered = (Read-Host 'Install skills for which agents? claude, grok, openai [claude]').Trim()
+    if (-not $entered) { return @('claude') }
+    $Requested = @($entered -split '[,\s]+' | Where-Object { $_ })
+  }
+  $picked = @()
+  foreach ($name in @($Requested)) {
+    foreach ($part in @($name -split '[,\s]+' | Where-Object { $_ })) {
+      $n = $part.ToLower()
+      if ($n -eq 'all') { return @($known) }
+      if ($known -notcontains $n) { throw "Unknown agent '$part'. Use claude, grok, or openai." }
+      if ($picked -notcontains $n) { $picked += $n }
+    }
+  }
+  if (-not $picked) { throw 'No agents selected.' }
+  return @($picked)
+}
 
 function ConvertTo-YamlSingleQuoted {
   param([string]$Value)
@@ -272,9 +308,11 @@ function Install-AzurePlugin {
 }
 
 function Main {
+  $agents = @(Resolve-Agents -Requested $AgentList)
   Write-Host "`nKMAD installer" -ForegroundColor Cyan
-  $dest = if ($Scope -eq 'project') { Join-Path (Get-Location) '.claude\skills' } else { Join-Path $env:USERPROFILE '.claude\skills' }
-  Write-Host "  skills -> $dest"
+  foreach ($agent in $agents) {
+    Write-Host "  $agent skills -> $(Get-SkillDest -Agent $agent -Scope $Scope)"
+  }
   Write-Host "  game development (engine, shader, cinematic, playtest) is opt-in"
   Write-Host "  workspace: blank, opt-in"
   Write-Host "  plugins: fizzy.do and Azure are opt-in`n"
@@ -308,7 +346,9 @@ function Main {
 
   try {
     $repoRoot = Get-RepoRoot
-    Install-Skills -Source (Join-Path $repoRoot 'skills') -Dest $dest -Names $names
+    foreach ($agent in $agents) {
+      Install-Skills -Source (Join-Path $repoRoot 'skills') -Dest (Get-SkillDest -Agent $agent -Scope $Scope) -Names $names
+    }
     # Board-id keys are written only for trackers that finished configuring.
     $trackers = @()
     if ($Fizzy -or (Ask 'Enable the fizzy.do plugin (card tracking)?' $false 'Fizzy')) {
@@ -325,7 +365,7 @@ function Main {
 
   Write-Host ''
   foreach ($s in $skipped) { Write-Host "Skipped: $s" -ForegroundColor Yellow }
-  Write-Host "`nDone. Restart Claude Code, then run /kmad" -ForegroundColor Green
+  Write-Host "`nDone. Restart the agent you installed for, then run /kmad. In Codex, run `$kmad." -ForegroundColor Green
 }
 
 if ($MyInvocation.InvocationName -ne '.') { Main }

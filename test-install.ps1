@@ -139,3 +139,24 @@ try {
 finally {
   Remove-Item $ws -Recurse -Force -ErrorAction SilentlyContinue
 }
+
+Assert ((Get-SkillDest -Agent claude -Scope user) -eq (Join-Path $env:USERPROFILE '.claude\skills')) 'claude skills dir'
+Assert ((Get-SkillDest -Agent grok -Scope user) -eq (Join-Path $env:USERPROFILE '.grok\skills')) 'grok skills dir'
+Assert ((Get-SkillDest -Agent openai -Scope user) -eq (Join-Path $env:USERPROFILE '.agents\skills')) 'openai skills dir'
+$proj = Join-Path $env:TEMP "kmad-proj-$([guid]::NewGuid())"
+New-Item -ItemType Directory -Path $proj | Out-Null
+try {
+  Push-Location $proj
+  Assert ((Get-SkillDest -Agent grok -Scope project) -eq (Join-Path (Get-Location).Path '.grok\skills')) 'project scope stays in the current directory'
+}
+finally {
+  Pop-Location
+  Remove-Item $proj -Recurse -Force -ErrorAction SilentlyContinue
+}
+Assert ((@(Resolve-Agents -Requested claude,openai) -join ',') -eq 'claude,openai') 'named agents are kept in order'
+Assert ((@(Resolve-Agents -Requested all) -join ',') -eq 'claude,grok,openai') 'all means the three agents'
+Assert ((@(Resolve-Agents -Requested 'grok, claude') -join ',') -eq 'grok,claude') 'a comma-separated agent list splits'
+$bad = $false
+try { Resolve-Agents -Requested nope } catch { $bad = $true }
+Assert $bad 'an unknown agent must fail'
+Write-Host 'OK agents' -ForegroundColor Green

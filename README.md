@@ -3,7 +3,7 @@
 KMAD is Kanban Minimal AI Development: continuous Kanban for one person building
 with an AI agent. No sprints. The tracker is [fizzy.do](https://fizzy.do) or
 Azure DevOps, whichever you configure. Docs live in the repo. Cards live on
-that board. The method ships as a set of Claude Code skills.
+that board. The method ships as skills for Claude, Grok, or OpenAI.
 
 ## Skills
 
@@ -28,6 +28,14 @@ that board. The method ships as a set of Claude Code skills.
 irm https://raw.githubusercontent.com/jacoblangston/kmad/main/install.ps1 | iex
 ```
 
+It asks which agents to install for: Claude (`%USERPROFILE%\.claude\skills`),
+Grok (`%USERPROFILE%\.grok\skills`), OpenAI (`%USERPROFILE%\.agents\skills`),
+or any combination. Pressing Enter installs for Claude only. `-Agents` sets
+the same list unattended, for example `-Agents claude,grok,openai`. A
+non-interactive run with no `-Agents` installs for Claude. `-Scope project`
+writes under the current directory instead of the user profile (`.claude\skills`,
+`.grok\skills`, or `.agents\skills`).
+
 It copies the six core skills, then asks whether to install game-development
 support (the **ENGINE**, **SHADER**, **CINEMA**, and **PLAYTEST** party seats:
 `kmad-engine`, `kmad-shader`, `kmad-cinematic`, `kmad-playtest`). That defaults
@@ -47,6 +55,8 @@ Omit `-Workspace` and `-WorkspacePath` and it skips the workspace the same way.
 **macOS / Linux**:
 
 ```sh
+# copy the same folders into one or more of:
+#   ~/.claude/skills   ~/.grok/skills   ~/.agents/skills
 cp -r skills/kmad skills/kmad-story skills/kmad-plan skills/kmad-architect skills/kmad-dev skills/kmad-party ~/.claude/skills/
 # optional game-development party seats:
 cp -r skills/kmad-engine skills/kmad-shader skills/kmad-cinematic skills/kmad-playtest ~/.claude/skills/
@@ -56,7 +66,7 @@ printf "workspace_root: '%s'\nprojects: []\n" "$HOME/workspace" > ~/workspace/wo
 npx fizzy-do-mcp@latest configure   # optional: card tracking
 ```
 
-Then in Claude Code, invoke with `/kmad` (or `/kmad-story`, `/kmad-dev`, etc.).
+Then invoke `/kmad` (or `/kmad-story`, `/kmad-dev`, and so on). In Codex, use `$kmad`.
 
 ## Start here
 
