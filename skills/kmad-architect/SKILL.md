@@ -22,6 +22,16 @@ Rules of engagement:
   any new code or dependency. Name each thing you lean on.
 - New abstraction or new dependency only where nothing existing fits — justify each in one line.
 - Design to the invariants and data model, not to the framework.
+- Rendering / shaders / GPU pipeline: follow the `kmad-shader` skill (and any
+  project visual doctrine it finds) before proposing a pipeline.
+- Cinematics / camera language / capture: follow the `kmad-cinematic` skill
+  (and any project cinematic doctrine it finds) before proposing a cutscene stack.
+- Automated play / headless harness / input tapes: follow the `kmad-playtest`
+  skill. Engine owns the player; games own plans. Do not design a per-game
+  test framework.
+- Popcorning Guinea Pig API, examples, or a game about to reimplement the
+  engine: follow the `kmad-engine` skill. Shared behavior is an engine change;
+  the agent contract and the example move with it.
 
 Write `docs/architecture/<feature>.md` with:
 1. **Data model** — new/changed entities, ownership, invariants, key constraints/indexes.

@@ -6,7 +6,9 @@ that fails in PowerShell. Fizzy setup is a separate undocumented step, and there
 Azure path at all. A Windows user has to reverse-engineer the install from the README.
 
 ## Outcome
-- `.\install.ps1` on a fresh clone puts all six kmad skills in `%USERPROFILE%\.claude\skills`; `/kmad` works in the next Claude Code session.
+- `.\install.ps1` on a fresh clone puts the six core kmad skills in `%USERPROFILE%\.claude\skills`; `/kmad` works in the next Claude Code session.
+- Game development is opt-in. Decline → `kmad-engine`, `kmad-shader`, `kmad-cinematic`, and `kmad-playtest` are not copied. Accept → those four party seats are installed. Already-installed game skills are left in place on a later decline.
+- A workspace is opt-in and blank. Decline → no workspace directory is created. Accept → the chosen directory gets `AGENTS.md` and a `workspace.yaml` with `projects: []`. The commented project shape includes `fizzy_board` only when Fizzy configured, `azure_board` only when Azure configured, and both when both did. No sample projects, paths, or board ids are written. An existing `AGENTS.md` or `workspace.yaml` is left untouched.
 - Fizzy is opt-in. Decline → no fizzy config, no MCP entry. Accept → `fizzy-do-mcp status` reports **Configured**.
 - Azure is opt-in. Accept → Azure MCP server registered at user scope, auth inherited from `az login`, no secret stored by us.
 - Re-running is idempotent: no duplicate MCP entries, no re-prompt for a token already stored.
@@ -20,7 +22,8 @@ Azure path at all. A Windows user has to reverse-engineer the install from the R
   `irm https://raw.githubusercontent.com/jacoblangston/kmad/main/install.ps1 | iex`.
   When `$PSScriptRoot` has no `skills\` beside it, the script downloads the repo zip to
   a temp dir, installs from that, and deletes it. Prompts-only in that mode — no params.
-- Copy `skills/*` → `$env:USERPROFILE\.claude\skills\` (`-Scope project` writes `.\.claude\skills\` instead).
+- Copy the six core skills → `$env:USERPROFILE\.claude\skills\` (`-Scope project` writes `.\.claude\skills\` instead). The four game-development party seats are copied only when the user accepts game development or passes `-Games`.
+- Optional blank workspace: copy `workspace/AGENTS.md` into the directory the user names, and write `workspace.yaml` with `workspace_root` set to that directory and `projects: []`. Board-id keys in the comment match the trackers that configured (`fizzy_board`, `azure_board`). The file is written after those plugin steps.
 - Optional fizzy plugin: token prompt → `npx fizzy-do-mcp@latest configure -t <token>` (it stores the token in `~/.config/fizzy-do-mcp/config.json` and registers the MCP server itself). We verify the entry landed and only write it ourselves if it didn't.
 - Optional Azure plugin: ensure `az` → `az login` → default subscription → register Azure MCP server (`npx -y @azure/mcp@latest server start`) at user scope.
 - MCP registration helper: use `claude mcp add --scope user` when `claude` is on PATH,
@@ -45,6 +48,9 @@ Every prompt has a switch that pre-answers it; supply all of them and the run is
 |---|----------|-----------|---------|--------|
 | 1 | Install for this user or this project? | never — parameter only | user | `-Scope user\|project` |
 | 2 | Overwrite existing kmad skill folders? | folders already present | Yes | `-Force` |
+| 2b | Install support for game development? | interactive session | **No** | `-Games` |
+| 2c | Configure a workspace? | interactive session | **No** | `-Workspace` |
+| 2d | Where should the workspace be configured? | workspace accepted and no `-WorkspacePath` | `%USERPROFILE%\workspace` | `-WorkspacePath` |
 | 3 | Enable the fizzy.do plugin? | always | **No** | `-Fizzy` |
 | 4 | Fizzy access token | fizzy accepted **and** not already configured | — | `-FizzyToken` |
 | 5 | Reconfigure fizzy? (shows current identity) | fizzy accepted and already configured | No | `-Reconfigure` |
@@ -59,24 +65,32 @@ passed on a visible command line.
 
 ## User flow
 1. `git clone` → `.\install.ps1` (or `powershell -ExecutionPolicy Bypass -File install.ps1`), **or** the `irm | iex` one-liner, which downloads the repo zip to temp first.
-2. Script prints what it will do, then copies the six skill folders — asking Q2 only if they already exist.
-3. Q3 fizzy. No → step 6.
-4. `fizzy-do-mcp status`: already configured → print identity, ask Q5. Otherwise ask Q4 and run `configure -t`.
-5. Verify with `whoami`, and confirm a `fizzy-do` entry now exists in the user MCP config — write it only if `configure` didn't. On failure print the error, leave nothing half-written, and continue.
-6. Q6 azure. No → step 9.
-7. `az` missing → prereq flow (Q7/Q8). Still missing or declined → skip azure with the exact install command printed.
-8. `az account show` → logged out runs `az login`; >1 subscription asks Q10 and `az account set`. Then register the Azure MCP server at user scope if it isn't already there.
-9. Summary: what was installed, what was skipped and why, and "restart Claude Code, then run `/kmad`".
+2. Script prints what it will do, then asks Q2b. No → core skills only. Yes or `-Games` → also the four game-development party seats. A non-interactive run without `-Games` takes the default (no) and does not throw.
+3. Copies that set — asking Q2 only if any of those folders already exist. Declining overwrite keeps those folders and still copies selected skills that are not there yet.
+4. Q2c workspace. No → step 5, and no workspace directory is created. Yes → Q2d unless `-WorkspacePath` was passed. Remember the directory; write the files in step 8, after the tracker plugins. A non-interactive run without `-Workspace` or `-WorkspacePath` takes the default (no). `-Workspace` alone uses `%USERPROFILE%\workspace`.
+5. Q3 fizzy. No → step 8. A successful Fizzy setup marks `fizzy` for the workspace file.
+6. `fizzy-do-mcp status`: already configured → print identity, ask Q5. Otherwise ask Q4 and run `configure -t`.
+7. Verify with `whoami`, and confirm a `fizzy-do` entry now exists in the user MCP config — write it only if `configure` didn't. On failure print the error, leave nothing half-written, and continue.
+8. Q6 azure. No → step 11. A successful Azure setup marks `azure` for the workspace file. Then, if a workspace directory was chosen, write `AGENTS.md` and an empty `workspace.yaml`. The commented project includes `fizzy_board` and/or `azure_board` only for trackers that configured. Does not copy the author's projects. Existing files in that directory stay as they are.
+9. `az` missing → prereq flow (Q7/Q8). Still missing or declined → skip azure with the exact install command printed.
+10. `az account show` → logged out runs `az login`; >1 subscription asks Q10 and `az account set`. Then register the Azure MCP server at user scope if it isn't already there.
+11. Summary: what was installed, what was skipped and why, and "restart Claude Code, then run `/kmad`".
 
 **Edge cases that matter**
-- **Non-interactive session** (CI, no console): any unanswered prompt fails fast with the switch name to use, rather than hanging.
+- **Non-interactive session** (CI, no console): any unanswered prompt fails fast with the switch name to use, rather than hanging. Game development and the workspace are the exceptions: omitting their switches means decline, because the default is no. `-Workspace` with no `-WorkspacePath` uses `%USERPROFILE%\workspace` and does not prompt.
 - **Fresh PATH after a prereq install**: winget/choco put `node`/`az` on the machine PATH but not the current process's. Re-resolve the exe from its known install dir; if that fails, tell the user to reopen the shell and re-run — never claim success on a tool we can't invoke.
 - **`~/.claude.json` hand-edit**: it's the live Claude Code config and can be large. Back it up, preserve everything else — if `claude` is on PATH, prefer the CLI and skip this path entirely.
 - **Unparseable `~/.claude.json`**: real configs contain project keys differing only in case (`c:\git\x` vs `C:\git\x`), which `ConvertFrom-Json` rejects outright. Confirmed on the author's machine. Refuse to rewrite, print the snippet to paste, and carry on — never truncate a config we can't round-trip.
 
 ## Acceptance criteria
 - [ ] Runs on Windows PowerShell 5.1 and PowerShell 7 without admin (base install).
-- [ ] Defaults-only run (No to both plugins) leaves six kmad folders under `$env:USERPROFILE\.claude\skills`, exit 0, and zero changes to any MCP config.
+- [ ] Defaults-only run (No to game development and both plugins) leaves the six core kmad folders under `$env:USERPROFILE\.claude\skills`, does not copy the four game-development skills, exit 0, and zero changes to any MCP config.
+- [ ] Accepting game development, or passing `-Games`, also copies `kmad-engine`, `kmad-shader`, `kmad-cinematic`, and `kmad-playtest`.
+- [ ] A non-interactive run without `-Games` skips game development and does not prompt or throw for that question.
+- [ ] Accepting a workspace, or passing `-WorkspacePath`, writes only `AGENTS.md` and a `workspace.yaml` with `projects: []` and `workspace_root` set to that directory. The files contain no sample project, path, or real board id.
+- [ ] `workspace.yaml`'s commented project includes `fizzy_board` only when Fizzy configured, `azure_board` only when Azure configured, both when both did, and neither key when neither did.
+- [ ] A second workspace run leaves an existing `AGENTS.md` and `workspace.yaml` byte-identical.
+- [ ] A non-interactive run without `-Workspace` and without `-WorkspacePath` skips the workspace and does not create a directory.
 - [ ] Non-kmad skill folders in that directory are never modified or deleted.
 - [ ] Declining overwrite leaves existing folders byte-identical and still exits 0.
 - [ ] Declining fizzy leaves no `~/.config/fizzy-do-mcp/config.json` and no `fizzy-do` MCP entry.
@@ -87,7 +101,7 @@ passed on a visible command line.
 - [ ] Accepting azure while logged out runs `az login` and sets the chosen default subscription when more than one exists.
 - [ ] After an azure run, the Azure MCP server is registered at user scope; a second run adds no duplicate.
 - [ ] Node/npx missing → both plugin steps skip with the exact install command printed; the skill copy still succeeds.
-- [ ] `-Force -Fizzy -FizzyToken <t> -Azure -Subscription <id>` completes with no prompts.
+- [ ] `-Force -Games -Fizzy -FizzyToken <t> -Azure -Subscription <id>` completes with no prompts. Without `-Games`, the same line still completes and skips game development.
 - [ ] MCP registration works both ways: with `claude` on PATH (CLI) and with it absent (`~/.claude.json` edited, backup written, unrelated keys preserved).
 - [ ] A `~/.claude.json` that PowerShell can't parse is left byte-identical, with no backup written and the manual snippet printed.
 - [ ] The `irm | iex` one-liner installs the skills on a machine with no clone, and removes its temp download afterward.

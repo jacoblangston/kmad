@@ -16,20 +16,32 @@ No separate sync layer between story files and the board.
 - `/kmad-dev` — implement one card end to end + drive its board moves.
 - `/kmad-party` — multi-seat review panel for designs, diffs, and tradeoffs.
 
+Game-development party seats. Present only when the installer was told to install game-development support:
+- `/kmad-shader` — GPU rendering and shader expert (also the **SHADER** party seat).
+- `/kmad-cinematic` — trailers and gameplay footage (also the **CINEMA** party seat).
+- `/kmad-playtest` — automated play of a PGP game (JSON tape + engine exe; also the **PLAYTEST** party seat).
+- `/kmad-engine` — Popcorning Guinea Pig engine developer (contract, examples, engine-vs-game; also the **ENGINE** party seat).
+
 ## Init (once per project)
 Before the first card, bind the project to a fizzy board and record it so the
 other skills stop re-asking. Re-running init is a safe reconcile — only create
 what's missing.
 1. **Board** — reuse an existing board (`fizzy_list_boards`) or create one (`fizzy_create_board`).
-2. **Columns** — create any missing of `Triage → Ready → Building (WIP=1) → Review → Done` via `fizzy_create_column`.
+2. **Columns** — boards have **To Do** and **In Progress** only. Create those
+   two if missing. Never create Ready, Building, Review, or Done. Triage is
+   fizzy's built-in untriaged pile; done is `fizzy_close_card`.
 3. **Docs** — scaffold `docs/product-plan/` and `docs/architecture/architecture.md`.
 4. **Bind** — record the board under a `## KMAD` heading in **`AGENTS.md` if it
    exists, else `CLAUDE.md`**: a line `Board: <board_id>  # fizzy.do`. This is
    the binding every kmad skill reads first.
 
 ## Board
-`Triage → Ready → Building (WIP=1) → Review → Done` — planning is the
-Triage→Ready transition, not a column.
+**To Do** → **In Progress** (WIP=1) → close.
+
+Triage is fizzy's untriaged pile, not a column. Done is closing the card.
+Ready / Building / Review / Done are a mental model, not board furniture —
+never look them up, never create them, never report them missing. Map those
+names onto To Do / In Progress / close and keep moving.
 
 ## Definition of Ready (the only gate)
 - Goal is one sentence.
@@ -44,14 +56,14 @@ Triage→Ready transition, not a column.
 - Rule of thumb: if getting it wrong means a migration or a breaking change to undo, it's **L**.
 
 ## Run a feature (end to end)
-1. **Capture** — create a fizzy card in `Triage` (`/kmad-story`; title `area: summary`, tag project + type).
+1. **Capture** — create a fizzy card (`/kmad-story`; title `area: summary`, tag project + type). New cards land in the untriaged pile.
 2. **Size it** — s/m/l. S/M skip to step 5.
-3. **Shape (L)** — `/kmad-plan` then `/kmad-architect`; link both docs in the card. Tag `shaping` while in Triage.
+3. **Shape (L)** — `/kmad-plan` then `/kmad-architect`; link both docs in the card. Tag `shaping` while untriaged.
 4. **Party (L/risky)** — `/kmad-party` on the architecture; decompose into the cards it names.
-5. **Ready** — write criteria as fizzy steps, confirm Definition of Ready, move card → `Ready`.
-6. **Build** — `/kmad-dev`: move → `Building` (WIP=1), code to the criteria only, toggle steps as they pass, log decisions as fizzy comments. New discoveries → new `Triage` cards, never scope-creep the current one.
-7. **Review** — self-review + tests; `/kmad-party` or `/code-review` if the diff earns it. Move → `Review`.
-8. **Done** — `fizzy_close_card` or move → `Done`.
+5. **Ready** — write criteria as fizzy steps, confirm Definition of Ready, move card → `To Do`.
+6. **Build** — `/kmad-dev`: move → `In Progress` (WIP=1), code to the criteria only, toggle steps as they pass, log decisions as fizzy comments. New discoveries → new untriaged cards, never scope-creep the current one.
+7. **Review** — self-review + tests; `/kmad-party` or `/code-review` if the diff earns it. Stay in `In Progress`.
+8. **Done** — `fizzy_close_card`.
 
 ## Card template (fizzy description, markdown)
 ```markdown

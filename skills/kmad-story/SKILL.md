@@ -9,6 +9,9 @@ Create ONE fizzy card from a short ask. This is the unit of work — no docs, no
 ceremony. For L features that need planning first, use `/kmad-plan` and
 `/kmad-architect`; this skill just captures a single issue.
 
+Boards have **To Do** and **In Progress** only. Never create Ready, Building,
+Review, or Done, and never report those names as missing.
+
 ## Input
 The ask comes from the invocation args. If missing, ask for it in one line.
 
@@ -17,9 +20,10 @@ The ask comes from the invocation args. If missing, ask for it in one line.
   `## KMAD` heading in `AGENTS.md` if it exists, else `CLAUDE.md`.
 - If no binding exists, call `fizzy_list_boards` and ask which board (or suggest
   running `/kmad` init to create the board + binding).
-- Default column: `Triage`. Use `Ready` only if the ask already meets the
-  Definition of Ready (clear goal + checkable criteria + size). Resolve the
-  column id with `fizzy_list_columns`; offer to create missing columns.
+- Default: leave the card in fizzy's untriaged pile (Triage). Put it on
+  `To Do` only if the ask already meets the Definition of Ready (clear goal +
+  checkable criteria + size). Resolve the column id with `fizzy_list_columns`
+  if you need To Do / In Progress; do not offer to create other columns.
 
 ## Draft
 Build the card, then show it for a quick confirm (skip the confirm if the user

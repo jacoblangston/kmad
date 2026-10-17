@@ -1,10 +1,11 @@
 <#
 .SYNOPSIS
-  Installs the KMAD skills for Claude Code, with optional fizzy.do and Azure plugins.
+  Installs the KMAD skills for Claude Code, with an optional blank workspace,
+  optional game-development party seats, and optional fizzy.do and Azure plugins.
 .EXAMPLE
   .\install.ps1
 .EXAMPLE
-  .\install.ps1 -Force -Fizzy -FizzyToken $t -Azure -Subscription 0000-... -InstallPrereqs
+  .\install.ps1 -Force -Games -WorkspacePath C:\work -Fizzy -FizzyToken $t -Azure -Subscription 0000-... -InstallPrereqs
 .EXAMPLE
   irm https://raw.githubusercontent.com/jacoblangston/kmad/main/install.ps1 | iex
 #>
@@ -13,6 +14,9 @@
 param(
   [ValidateSet('user', 'project')][string]$Scope = 'user',
   [switch]$Force,
+  [switch]$Games,
+  [switch]$Workspace,
+  [string]$WorkspacePath,
   [switch]$Fizzy,
   [string]$FizzyToken,
   [switch]$Reconfigure,
@@ -24,6 +28,8 @@ param(
 $ErrorActionPreference = 'Stop'
 $RepoZip = 'https://github.com/jacoblangston/kmad/archive/refs/heads/main.zip'
 $skipped = @()
+$CoreSkills = @('kmad', 'kmad-story', 'kmad-plan', 'kmad-architect', 'kmad-dev', 'kmad-party')
+$GameSkills = @('kmad-engine', 'kmad-shader', 'kmad-cinematic', 'kmad-playtest')
 
 function Ask {
   param([string]$Question, [bool]$Default, [string]$Switch)
@@ -41,8 +47,9 @@ function Update-Path {
   $env:PATH = ([Environment]::GetEnvironmentVariable('PATH', 'Machine'), [Environment]::GetEnvironmentVariable('PATH', 'User')) -join ';'
 }
 
-function Get-SkillSource {
-  if ($PSScriptRoot -and (Test-Path (Join-Path $PSScriptRoot 'skills'))) { return Join-Path $PSScriptRoot 'skills' }
+function Get-RepoRoot {
+  if ($PSScriptRoot -and (Test-Path (Join-Path $PSScriptRoot 'skills'))) { return $PSScriptRoot }
+  if ($script:DownloadedRoot) { return $script:DownloadedRoot }
   Write-Host 'No local skills\ found - downloading the repo...' -ForegroundColor DarkGray
   [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
   $tmp = Join-Path $env:TEMP "kmad-install-$([guid]::NewGuid())"
@@ -51,27 +58,84 @@ function Get-SkillSource {
   Invoke-WebRequest -Uri $RepoZip -OutFile $zip -UseBasicParsing
   Expand-Archive -Path $zip -DestinationPath $tmp -Force
   $script:TempSource = $tmp
-  return (Join-Path $tmp 'kmad-main\skills')
+  $script:DownloadedRoot = Join-Path $tmp 'kmad-main'
+  return $script:DownloadedRoot
+}
+
+function Get-SkillSource { Join-Path (Get-RepoRoot) 'skills' }
+
+function ConvertTo-YamlSingleQuoted {
+  param([string]$Value)
+  "'" + ($Value -replace "'", "''") + "'"
+}
+
+function Install-Workspace {
+  param([string]$Path, [string]$TemplateRoot, [string[]]$Trackers = @())
+  $dest = [IO.Path]::GetFullPath($Path)
+  New-Item -ItemType Directory -Path $dest -Force | Out-Null
+
+  $template = Join-Path $TemplateRoot 'workspace\AGENTS.md'
+  if (-not (Test-Path $template)) {
+    Write-Warning "Workspace template missing: $template"
+    $script:skipped += 'workspace (template missing)'
+    return
+  }
+
+  $agents = Join-Path $dest 'AGENTS.md'
+  if (Test-Path $agents) { Write-Host "Kept existing $agents" -ForegroundColor Yellow }
+  else { Copy-Item $template $agents; Write-Host "Wrote $agents" -ForegroundColor Green }
+
+  $yamlPath = Join-Path $dest 'workspace.yaml'
+  if (Test-Path $yamlPath) { Write-Host "Kept existing $yamlPath" -ForegroundColor Yellow; return }
+
+  # Only the trackers that actually configured get a board-id key. null means
+  # that tracker is in use and this project has no board yet.
+  $lines = @(
+    "workspace_root: $(ConvertTo-YamlSingleQuoted $dest)"
+    'projects: []'
+    '# Add a project when the user names a repo.'
+    "# - name: 'My App'"
+    "#   path: '<path-to-repo>'"
+  )
+  if ($Trackers -contains 'fizzy') {
+    $lines += '# fizzy_board: null means Fizzy is configured and this project has no board yet.'
+    $lines += '#   fizzy_board: null'
+  }
+  if ($Trackers -contains 'azure') {
+    $lines += '# azure_board: null means Azure Boards is configured and this project has no board yet.'
+    $lines += '#   azure_board: null'
+  }
+  if (-not $Trackers) {
+    $lines += '# No tracker configured. After Fizzy or Azure Boards is configured, add fizzy_board or azure_board. null means no board yet.'
+  }
+  $lines -join "`n" | Set-Content $yamlPath -Encoding UTF8
+  Write-Host "Wrote $yamlPath" -ForegroundColor Green
 }
 
 function Install-Skills {
-  param([string]$Source, [string]$Dest)
+  param([string]$Source, [string]$Dest, [string[]]$Names)
   New-Item -ItemType Directory -Path $Dest -Force | Out-Null
-  $names = Get-ChildItem $Source -Directory | Select-Object -ExpandProperty Name
-  $existing = $names | Where-Object { Test-Path (Join-Path $Dest $_) }
+  $present = @($Names | Where-Object { Test-Path (Join-Path $Source $_) })
+  $missing = @($Names | Where-Object { -not (Test-Path (Join-Path $Source $_)) })
+  if ($missing) { Write-Warning "Not in this source, skipped: $($missing -join ', ')" }
+  if (-not $present) { return }
+
+  $existing = @($present | Where-Object { Test-Path (Join-Path $Dest $_) })
+  $copy = @($present)
   if ($existing -and -not $Force) {
     if (-not (Ask "Overwrite existing skills ($($existing -join ', '))?" $true 'Force')) {
       Write-Host 'Kept existing skills.' -ForegroundColor Yellow
-      return
+      # Still copy skills from this run that are not on disk yet.
+      $copy = @($present | Where-Object { $existing -notcontains $_ })
     }
   }
-  # ponytail: only our own folders are touched; anything else in the skills dir is left alone.
-  foreach ($n in $names) {
+  # ponytail: only the named folders are touched; anything else in the skills dir is left alone.
+  foreach ($n in $copy) {
     $target = Join-Path $Dest $n
     if (Test-Path $target) { Remove-Item $target -Recurse -Force }
     Copy-Item (Join-Path $Source $n) $target -Recurse
   }
-  Write-Host "Installed $($names.Count) skills to $Dest" -ForegroundColor Green
+  if ($copy) { Write-Host "Installed $($copy.Count) skills to $Dest" -ForegroundColor Green }
 }
 
 function Get-McpConfigPath { Join-Path $env:USERPROFILE '.claude.json' }
@@ -149,14 +213,14 @@ function Install-Prereq {
 function Install-FizzyPlugin {
   if (-not (Install-Prereq -Exe 'npx' -WingetId 'OpenJS.NodeJS.LTS' -ChocoId 'nodejs-lts' -Label 'Node.js')) {
     $script:skipped += 'fizzy (Node.js missing - winget install OpenJS.NodeJS.LTS)'
-    return
+    return $false
   }
   $status = (& npx --yes fizzy-do-mcp@latest status 2>&1 | Out-String)
   if ($status -match 'Status:\s*Configured') {
     Write-Host ($status -split "`n" | Where-Object { $_ -match 'Account:|Token:' }) -ForegroundColor DarkGray
     if (-not ($Reconfigure -or (Ask 'Fizzy is already configured. Reconfigure?' $false 'Reconfigure'))) {
       Add-McpServer -Name 'fizzy-do' -Command @('cmd', '/c', 'npx --yes fizzy-do-mcp@latest')
-      return
+      return $true
     }
   }
   # ponytail: no -t when interactive - let fizzy prompt for the token so it never
@@ -168,28 +232,29 @@ function Install-FizzyPlugin {
   if ($LASTEXITCODE -ne 0) {
     Write-Warning "Fizzy setup failed:`n$who"
     $script:skipped += 'fizzy (setup failed)'
-    return
+    return $false
   }
   Write-Host 'Fizzy configured.' -ForegroundColor Green
   # configure auto-registers the MCP server; only write it ourselves if it didn't.
   Add-McpServer -Name 'fizzy-do' -Command @('cmd', '/c', 'npx --yes fizzy-do-mcp@latest')
+  return $true
 }
 
 function Install-AzurePlugin {
   if (-not (Install-Prereq -Exe 'az' -WingetId 'Microsoft.AzureCLI' -ChocoId 'azure-cli' -Label 'Azure CLI')) {
     $script:skipped += 'azure (Azure CLI missing - winget install Microsoft.AzureCLI)'
-    return
+    return $false
   }
   if (-not (Install-Prereq -Exe 'npx' -WingetId 'OpenJS.NodeJS.LTS' -ChocoId 'nodejs-lts' -Label 'Node.js')) {
     $script:skipped += 'azure (Node.js missing - winget install OpenJS.NodeJS.LTS)'
-    return
+    return $false
   }
 
   & az account show -o none 2>$null
   if ($LASTEXITCODE -ne 0) {
     Write-Host 'Not signed in to Azure - launching az login...' -ForegroundColor Cyan
     & az login -o none
-    if ($LASTEXITCODE -ne 0) { Write-Warning 'az login failed.'; $script:skipped += 'azure (login failed)'; return }
+    if ($LASTEXITCODE -ne 0) { Write-Warning 'az login failed.'; $script:skipped += 'azure (login failed)'; return $false }
   }
 
   if ($Subscription) { & az account set --subscription $Subscription }
@@ -203,18 +268,56 @@ function Install-AzurePlugin {
   }
   Write-Host "Azure account: $(& az account show --query name -o tsv)" -ForegroundColor Green
   Add-McpServer -Name 'azure' -Command @('cmd', '/c', 'npx -y @azure/mcp@latest server start')
+  return $true
 }
 
 function Main {
   Write-Host "`nKMAD installer" -ForegroundColor Cyan
   $dest = if ($Scope -eq 'project') { Join-Path (Get-Location) '.claude\skills' } else { Join-Path $env:USERPROFILE '.claude\skills' }
   Write-Host "  skills -> $dest"
+  Write-Host "  game development (engine, shader, cinematic, playtest) is opt-in"
+  Write-Host "  workspace: blank, opt-in"
   Write-Host "  plugins: fizzy.do and Azure are opt-in`n"
 
+  # ponytail: default is no, so a non-interactive run without -Games declines
+  # instead of throwing. -Games is the only unattended opt-in.
+  $names = @($CoreSkills)
+  $installGames = [bool]$Games
+  if (-not $installGames -and [Environment]::UserInteractive) {
+    $installGames = Ask 'Install support for game development?' $false 'Games'
+  }
+  if ($installGames) { $names += $GameSkills } else { $skipped += 'game development (declined)' }
+
+  # Same rule as -Games: a non-interactive run declines unless a switch opts in.
+  # -WorkspacePath implies yes. -Workspace alone uses the default directory.
+  $wantWorkspace = [bool]($Workspace -or $WorkspacePath)
+  if (-not $wantWorkspace -and [Environment]::UserInteractive) {
+    $wantWorkspace = Ask 'Configure a workspace?' $false 'Workspace'
+  }
+  $wsPath = $null
+  if ($wantWorkspace) {
+    $wsPath = $WorkspacePath
+    if (-not $wsPath) {
+      $defaultWs = Join-Path $env:USERPROFILE 'workspace'
+      if ([Environment]::UserInteractive) {
+        $entered = (Read-Host "Where should the workspace be configured? [$defaultWs]").Trim()
+        if ($entered) { $wsPath = $entered } else { $wsPath = $defaultWs }
+      } else { $wsPath = $defaultWs }
+    }
+  } else { $skipped += 'workspace (declined)' }
+
   try {
-    Install-Skills -Source (Get-SkillSource) -Dest $dest
-    if ($Fizzy -or (Ask 'Enable the fizzy.do plugin (card tracking)?' $false 'Fizzy')) { Install-FizzyPlugin } else { $skipped += 'fizzy (declined)' }
-    if ($Azure -or (Ask 'Enable the Azure plugin (Azure MCP via az login)?' $false 'Azure')) { Install-AzurePlugin } else { $skipped += 'azure (declined)' }
+    $repoRoot = Get-RepoRoot
+    Install-Skills -Source (Join-Path $repoRoot 'skills') -Dest $dest -Names $names
+    # Board-id keys are written only for trackers that finished configuring.
+    $trackers = @()
+    if ($Fizzy -or (Ask 'Enable the fizzy.do plugin (card tracking)?' $false 'Fizzy')) {
+      if ((@(Install-FizzyPlugin)[-1]) -eq $true) { $trackers += 'fizzy' }
+    } else { $skipped += 'fizzy (declined)' }
+    if ($Azure -or (Ask 'Enable the Azure plugin (Azure MCP via az login)?' $false 'Azure')) {
+      if ((@(Install-AzurePlugin)[-1]) -eq $true) { $trackers += 'azure' }
+    } else { $skipped += 'azure (declined)' }
+    if ($wsPath) { Install-Workspace -Path $wsPath -TemplateRoot $repoRoot -Trackers $trackers }
   }
   finally {
     if ($script:TempSource) { Remove-Item $script:TempSource -Recurse -Force -ErrorAction SilentlyContinue }

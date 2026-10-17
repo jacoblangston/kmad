@@ -14,6 +14,10 @@ MCP tools. A set of Claude Code skills.
 | `kmad-architect` | Smallest-correct system design + per-feature architecture doc. |
 | `kmad-dev` | Implement one card end to end and drive its board moves. |
 | `kmad-party` | Multi-seat review panel for designs, diffs, and tradeoffs. |
+| `kmad-shader` | Optional. GPU rendering and shader expert; also the **SHADER** party seat. |
+| `kmad-cinematic` | Optional. Game cinematic director for trailers and gameplay footage; also the **CINEMA** party seat. |
+| `kmad-playtest` | Optional. Automated play of a PGP game (JSON input tape + engine exe); also the **PLAYTEST** party seat. |
+| `kmad-engine` | Optional. Popcorning Guinea Pig engine developer (contract, examples, engine-vs-game); also the **ENGINE** party seat. |
 
 ## Install
 
@@ -23,15 +27,31 @@ MCP tools. A set of Claude Code skills.
 irm https://raw.githubusercontent.com/jacoblangston/kmad/main/install.ps1 | iex
 ```
 
-It copies the skills, then offers two opt-in plugins: **fizzy.do** (card tracking —
+It copies the six core skills, then asks whether to install game-development
+support (the **ENGINE**, **SHADER**, **CINEMA**, and **PLAYTEST** party seats:
+`kmad-engine`, `kmad-shader`, `kmad-cinematic`, `kmad-playtest`). That defaults
+to no. It then asks whether to configure a blank workspace, and where
+(`%USERPROFILE%\workspace` if you just press Enter). Accepting writes
+`AGENTS.md` and a `workspace.yaml` whose `projects` list is empty. Each
+project can store `fizzy_board`, `azure_board`, or both, matching the trackers
+that finished configuring. It does not copy anyone's repos or board ids.
+Files already in that directory are left alone. It then offers two opt-in plugins: **fizzy.do** (card tracking —
 prompts for your token) and **Azure** (Azure MCP server, auth inherited from
 `az login`). Both default to no; missing prereqs are offered via winget or choco.
-Switches for an unattended run: `-Force -Fizzy -FizzyToken <t> -Azure -Subscription <id> -InstallPrereqs`.
+Switches for an unattended run: `-Force -Games -WorkspacePath C:\work -Fizzy -FizzyToken <t> -Azure -Subscription <id> -InstallPrereqs`.
+Omit `-Games` and a non-interactive run skips game development without asking.
+Omit `-Workspace` and `-WorkspacePath` and it skips the workspace the same way.
+`-Workspace` alone uses `%USERPROFILE%\workspace`.
 
 **macOS / Linux**:
 
 ```sh
-cp -r skills/* ~/.claude/skills/
+cp -r skills/kmad skills/kmad-story skills/kmad-plan skills/kmad-architect skills/kmad-dev skills/kmad-party ~/.claude/skills/
+# optional game-development party seats:
+cp -r skills/kmad-engine skills/kmad-shader skills/kmad-cinematic skills/kmad-playtest ~/.claude/skills/
+# optional blank workspace — edit the directory, leave projects empty:
+mkdir -p ~/workspace && cp workspace/AGENTS.md ~/workspace/AGENTS.md
+printf "workspace_root: '%s'\nprojects: []\n" "$HOME/workspace" > ~/workspace/workspace.yaml
 npx fizzy-do-mcp@latest configure   # optional: card tracking
 ```
 
