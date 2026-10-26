@@ -29,9 +29,12 @@ Rules of engagement:
 - Automated play / headless harness / input tapes: follow the `kmad-playtest`
   skill. Engine owns the player; games own plans. Do not design a per-game
   test framework.
-- Popcorning Guinea Pig API, examples, or a game about to reimplement the
-  engine: follow the `kmad-engine` skill. Shared behavior is an engine change;
-  the agent contract and the example move with it.
+- Popcorning Guinea Pig or Kaigen: follow the `kmad-engine` skill. It picks
+  the engine. On PGP, shared behavior is an engine change and the contract
+  moves with it. On Kaigen, read the project's own skills and leave the
+  installed drop alone.
+- Models, textures, or generated art: follow the `kmad-art` skill. It follows
+  the engine the game already runs. Tools stay where that engine keeps them.
 
 Write `docs/architecture/<feature>.md` with:
 1. **Data model** — new/changed entities, ownership, invariants, key constraints/indexes.

@@ -20,7 +20,8 @@ Game-development party seats. Present only when the installer was told to instal
 - `/kmad-shader` — GPU rendering and shader expert (also the **SHADER** party seat).
 - `/kmad-cinematic` — trailers and gameplay footage (also the **CINEMA** party seat).
 - `/kmad-playtest` — automated play of a PGP game (JSON tape + engine exe; also the **PLAYTEST** party seat).
-- `/kmad-engine` — Popcorning Guinea Pig engine developer (contract, examples, engine-vs-game; also the **ENGINE** party seat).
+- `/kmad-engine` — Popcorning Guinea Pig and Kaigen engine developer (also the **ENGINE** party seat). It picks the engine from the project.
+- `/kmad-art` — asset production on the engine the game already runs (also the **ART** party seat).
 
 ## Init (once per project)
 Before the first card, bind the project to a fizzy board and record it so the

@@ -1,6 +1,6 @@
 ---
 name: kmad-party
-description: 'KMAD party mode — convene a standing multi-seat review panel (Architect / Product / Security / Data-Perf / Engine / Shader / Cinema / Playtest / Ponytail) on a design, diff, or tradeoff, give one decisive recommendation, then stay open for back-and-forth discussion. Use when the user says "kmad party", "/kmad-party", "party mode", "review this design", or is stuck between two approaches.'
+description: 'KMAD party mode — convene a standing multi-seat review panel (Architect / Product / Security / Data-Perf / Engine / Shader / Cinema / Playtest / Art / Ponytail) on a design, diff, or tradeoff, give one decisive recommendation, then stay open for back-and-forth discussion. Use when the user says "kmad party", "/kmad-party", "party mode", "review this design", or is stuck between two approaches.'
 ---
 
 # KMAD — Party Mode
@@ -17,15 +17,16 @@ diff, or the two options. If it's unclear what to review, ask in one line.
 
 ## Opening round
 Convene the panel. Each relevant seat opens once, in its own voice, ~4 lines max.
-ENGINE, SHADER, CINEMA, and PLAYTEST are game-development personas. Skip a seat when its skill is not installed (`kmad-engine`, `kmad-shader`, `kmad-cinematic`, `kmad-playtest`).
+ENGINE, SHADER, CINEMA, PLAYTEST, and ART are game-development personas. Skip a seat when its skill is not installed (`kmad-engine`, `kmad-shader`, `kmad-cinematic`, `kmad-playtest`, `kmad-art`).
 - **ARCHITECT** — correctness, boundaries, does it hold under load / edge cases.
 - **PRODUCT** — does this serve the user outcome; is scope right.
 - **SECURITY** — authz, data isolation, trust boundaries, secrets.
-- **DATA/PERF** — schema, indexes, query cost, migration safety, hot paths.
-- **ENGINE** — invoke the `kmad-engine` skill (Popcorning Guinea Pig). Open on every review of the engine or a game that runs on it. Name whether PGP already does this, whether a game-side copy would fork it, and which contract, example, or docs go stale. If the engine already holds, say so in one line. Stay silent on non-game work. GPU cost stays **SHADER**; tapes stay **PLAYTEST**; shot lists stay **CINEMA**.
-- **SHADER** — invoke the `kmad-shader` skill (GPU rendering + shaders). Open this seat only when the artifact touches rendering, shaders, GPU, materials, lighting, post, or a graphics API; skip it otherwise.
+- **DATA/PERF** — schema, indexes, query cost, migration safety, hot paths. On a game, also frame time and allocations on the named min machine. The measurement loop is **SHADER**.
+- **ENGINE** — invoke the `kmad-engine` skill (Popcorning Guinea Pig or Kaigen). Name which engine. Open on every review of that engine or a game that runs on it. A PGP rule does not apply to a Kaigen project, and the reverse. If that engine already holds, say so in one line. Stay silent on non-game work. GPU cost stays **SHADER**; shot lists stay **CINEMA**. On PGP, tapes stay **PLAYTEST**. On Kaigen, scripted play stays the project's `hz-build` skill. Models and textures stay **ART** on either engine.
+- **SHADER** — invoke the `kmad-shader` skill (GPU rendering + shaders). Open this seat only when the artifact touches rendering, shaders, GPU, materials, lighting, post, frame time, or a graphics API; skip it otherwise.
 - **CINEMA** — invoke the `kmad-cinematic` skill (trailers + gameplay footage). Open this seat only when the artifact touches trailers, cinematics, cutscenes, shot-making, capture, gameplay footage, or camera direction; skip it otherwise.
-- **PLAYTEST** — invoke the `kmad-playtest` skill (automated play). Open this seat only when the artifact touches playing the exe without a human, input tapes, headless/offscreen harness, or smoke-exit; skip it otherwise. Trailer stills stay **CINEMA**.
+- **PLAYTEST** — invoke the `kmad-playtest` skill (automated play). Open this seat only when the artifact touches playing the exe without a human, input tapes, headless/offscreen harness, smoke-exit, or whether a hit reads; skip it otherwise. Trailer stills stay **CINEMA**. Asset approval stays **ART**.
+- **ART** — invoke the `kmad-art` skill. Open this seat only when the artifact is a model, texture, sprite, or generated image; skip it otherwise.
 - **PONYTAIL** — invoke the `ponytail` plugin persona (lazy senior dev). Run its ladder on the design: does this need to exist at all (YAGNI)? stdlib / native / already-installed dep before new code? one line before fifty? Name what to delete, defer, or not build, and the shortest thing that works.
 
 Then surface the real DISAGREEMENTS (not the agreements) and give ONE

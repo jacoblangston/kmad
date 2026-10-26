@@ -7,7 +7,7 @@ Azure path at all. A Windows user has to reverse-engineer the install from the R
 
 ## Outcome
 - `.\install.ps1` on a fresh clone asks which agents to install for. Enter, or a non-interactive run with no `-Agents`, puts the six core kmad skills in `%USERPROFILE%\.claude\skills`. Grok goes to `%USERPROFILE%\.grok\skills`. OpenAI goes to `%USERPROFILE%\.agents\skills`.
-- Game development is opt-in. Decline → `kmad-engine`, `kmad-shader`, `kmad-cinematic`, and `kmad-playtest` are not copied. Accept → those four party seats are installed. Already-installed game skills are left in place on a later decline.
+- Game development is opt-in. Decline → `kmad-engine`, `kmad-shader`, `kmad-cinematic`, `kmad-playtest`, and `kmad-art` are not copied. Accept → those five party seats are installed. Already-installed game skills are left in place on a later decline.
 - A workspace is opt-in and blank. Decline → no workspace directory is created. Accept → the chosen directory gets `AGENTS.md` and a `workspace.yaml` with `projects: []`. The commented project shape includes `fizzy_board` only when Fizzy configured, `azure_board` only when Azure configured, and both when both did. No sample projects, paths, or board ids are written. An existing `AGENTS.md` or `workspace.yaml` is left untouched.
 - Fizzy is opt-in. Decline → no fizzy config, no MCP entry. Accept → `fizzy-do-mcp status` reports **Configured**.
 - Azure is opt-in. Accept → Azure MCP server registered at user scope, auth inherited from `az login`, no secret stored by us.
@@ -22,7 +22,7 @@ Azure path at all. A Windows user has to reverse-engineer the install from the R
   `irm https://raw.githubusercontent.com/jacoblangston/kmad/main/install.ps1 | iex`.
   When `$PSScriptRoot` has no `skills\` beside it, the script downloads the repo zip to
   a temp dir, installs from that, and deletes it. Prompts-only in that mode — no params.
-- Copy the six core skills into the skill directory of each agent the user picked. User scope: `.claude\skills`, `.grok\skills`, `.agents\skills` under `$env:USERPROFILE`. `-Scope project` uses those same folder names under the current directory. The four game-development party seats are copied only when the user accepts game development or passes `-Games`.
+- Copy the six core skills into the skill directory of each agent the user picked. User scope: `.claude\skills`, `.grok\skills`, `.agents\skills` under `$env:USERPROFILE`. `-Scope project` uses those same folder names under the current directory. The five game-development party seats are copied only when the user accepts game development or passes `-Games`.
 - Optional blank workspace: copy `workspace/AGENTS.md` into the directory the user names, and write `workspace.yaml` with `workspace_root` set to that directory and `projects: []`. Board-id keys in the comment match the trackers that configured (`fizzy_board`, `azure_board`). The file is written after those plugin steps.
 - Optional fizzy plugin: token prompt → `npx fizzy-do-mcp@latest configure -t <token>` (it stores the token in `~/.config/fizzy-do-mcp/config.json` and registers the MCP server itself). We verify the entry landed and only write it ourselves if it didn't.
 - Optional Azure plugin: ensure `az` → `az login` → default subscription → register Azure MCP server (`npx -y @azure/mcp@latest server start`) at user scope.
@@ -66,7 +66,7 @@ passed on a visible command line.
 ## User flow
 1. `git clone` → `.\install.ps1` (or `powershell -ExecutionPolicy Bypass -File install.ps1`), **or** the `irm | iex` one-liner, which downloads the repo zip to temp first.
 2. Q1b agents. Enter, or a non-interactive run with no `-Agents`, means Claude only. A list or `-Agents` installs for those agents. `all` means Claude, Grok, and OpenAI.
-3. Script prints where each agent's skills will go, then asks Q2b. No → core skills only. Yes or `-Games` → also the four game-development party seats. A non-interactive run without `-Games` takes the default (no) and does not throw.
+3. Script prints where each agent's skills will go, then asks Q2b. No → core skills only. Yes or `-Games` → also the five game-development party seats. A non-interactive run without `-Games` takes the default (no) and does not throw.
 4. Copies that set into each chosen agent's skill directory — asking Q2 only if any of those folders already exist. Declining overwrite keeps those folders and still copies selected skills that are not there yet.
 5. Q2c workspace. No → step 6, and no workspace directory is created. Yes → Q2d unless `-WorkspacePath` was passed. Remember the directory; write the files in step 9, after the tracker plugins. A non-interactive run without `-Workspace` or `-WorkspacePath` takes the default (no). `-Workspace` alone uses `%USERPROFILE%\workspace`.
 6. Q3 fizzy. No → step 9. A successful Fizzy setup marks `fizzy` for the workspace file.
@@ -85,9 +85,9 @@ passed on a visible command line.
 
 ## Acceptance criteria
 - [ ] Runs on Windows PowerShell 5.1 and PowerShell 7 without admin (base install).
-- [ ] Defaults-only run (Enter for agents, No to game development and both plugins) leaves the six core kmad folders under `$env:USERPROFILE\.claude\skills`, does not copy the four game-development skills, exit 0, and zero changes to any MCP config.
+- [ ] Defaults-only run (Enter for agents, No to game development and both plugins) leaves the six core kmad folders under `$env:USERPROFILE\.claude\skills`, does not copy the five game-development skills, exit 0, and zero changes to any MCP config.
 - [ ] `-Agents grok` writes those skills under `$env:USERPROFILE\.grok\skills`. `-Agents openai` writes them under `$env:USERPROFILE\.agents\skills`. `-Agents all` writes all three. An unknown name fails before copying.
-- [ ] Accepting game development, or passing `-Games`, also copies `kmad-engine`, `kmad-shader`, `kmad-cinematic`, and `kmad-playtest`.
+- [ ] Accepting game development, or passing `-Games`, also copies `kmad-engine`, `kmad-shader`, `kmad-cinematic`, `kmad-playtest`, and `kmad-art`.
 - [ ] A non-interactive run without `-Games` skips game development and does not prompt or throw for that question.
 - [ ] Accepting a workspace, or passing `-WorkspacePath`, writes only `AGENTS.md` and a `workspace.yaml` with `projects: []` and `workspace_root` set to that directory. The files contain no sample project, path, or real board id.
 - [ ] `workspace.yaml`'s commented project includes `fizzy_board` only when Fizzy configured, `azure_board` only when Azure configured, both when both did, and neither key when neither did.

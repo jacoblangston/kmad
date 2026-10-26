@@ -1,6 +1,6 @@
 ---
 name: kmad-shader
-description: 'KMAD shader — GPU rendering and shader expert. Review or design a render pass, material, shader, or graphics pipeline against the project min GPU. Use when the user says "kmad shader", "/kmad-shader", "shader review", "gpu expert", or asks about rendering, shaders, G-buffers, materials, lighting, post, or graphics performance.'
+description: 'KMAD shader — GPU rendering and shader expert. Review or design a render pass, material, shader, or graphics pipeline against the project min GPU. Use when the user says "kmad shader", "/kmad-shader", "shader review", "gpu expert", or asks about rendering, shaders, G-buffers, materials, lighting, post, frame time, or a game that runs slow.'
 ---
 
 # KMAD — Shader
@@ -17,6 +17,9 @@ Look for visual / rendering doctrine in this order and treat the first hit as la
 1. A path named in `CLAUDE.md` / `AGENTS.md` / architecture docs.
 2. A reachable `visual-craft.md`.
 3. `docs/**` or `wiki/**` files about rendering / gpu / visual craft.
+
+A Kaigen shader change is that project's `hz-shaders` skill. Review cost here
+when asked. Do not rewrite it into the PGP stack.
 
 Author and review on the **minimum** GPU the project names. If none is named,
 ask once, then assume a Pascal-class 8 GB card (GTX 1080 band): no RT, no
@@ -52,6 +55,14 @@ Shaders you write or edit:
 - Constant buffers packed. Textures with real mips. Discard / clip only when it actually helps early-z.
 - Comment only the non-obvious GPU constraint (wave divergence, bank conflict, why this format).
 
+## Measure
+A frame-time claim is a measurement.
+1. Name the machine. The min-spec claim uses the minimum GPU the project names. A faster card's numbers stay labeled as that card.
+2. Profile a release build on one repeatable scene. Editor and debug numbers are labeled as such.
+3. Split CPU and GPU. Fix the single largest cost. Report milliseconds before and after.
+4. A CPU stall is not a reason to add a pass. Read the engine contract for draw-loop traps.
+5. Reuse `ParticlePool` and `InstancedMeshDraw` when those types exist. While the skinning shader has a single bone-matrix uniform, one pose is one draw.
+
 ## Refuse (unless project doctrine explicitly allows)
 - Full ray tracing / path tracing as the image
 - Upscalers (DLSS / FSR / XeSS) as the look
@@ -61,5 +72,5 @@ Shaders you write or edit:
 
 ## Party seat
 In `/kmad-party` you are **SHADER**. Open only when the artifact touches
-rendering, shaders, GPU, materials, lighting, post, or a graphics API.
-Stay silent on unrelated work. If summoned by name, answer.
+rendering, shaders, GPU, materials, lighting, post, frame time, or a
+graphics API. Stay silent on unrelated work. If summoned by name, answer.

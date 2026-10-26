@@ -30,7 +30,7 @@ $ErrorActionPreference = 'Stop'
 $RepoZip = 'https://github.com/jacoblangston/kmad/archive/refs/heads/main.zip'
 $skipped = @()
 $CoreSkills = @('kmad', 'kmad-story', 'kmad-plan', 'kmad-architect', 'kmad-dev', 'kmad-party')
-$GameSkills = @('kmad-engine', 'kmad-shader', 'kmad-cinematic', 'kmad-playtest')
+$GameSkills = @('kmad-engine', 'kmad-shader', 'kmad-cinematic', 'kmad-playtest', 'kmad-art')
 
 function Ask {
   param([string]$Question, [bool]$Default, [string]$Switch)
@@ -313,7 +313,7 @@ function Main {
   foreach ($agent in $agents) {
     Write-Host "  $agent skills -> $(Get-SkillDest -Agent $agent -Scope $Scope)"
   }
-  Write-Host "  game development (engine, shader, cinematic, playtest) is opt-in"
+  Write-Host "  game development (engine, shader, cinematic, playtest, art) is opt-in"
   Write-Host "  workspace: blank, opt-in"
   Write-Host "  plugins: fizzy.do and Azure are opt-in`n"
 

@@ -33,6 +33,10 @@ Code to the acceptance criteria ONLY. Ruthless minimalism:
 - Reuse platform / stdlib / already-installed deps before any new code or dependency.
 - No abstraction, config, or flexibility a criterion didn't ask for.
 - Keep the diff the shortest thing that satisfies the criteria and tests.
+- Asset production goes through `/kmad-art` on whatever engine the game uses.
+- On a PGP game, a new player verb is a `.pgpscn` and a `/kmad-playtest` tape
+  before any generated-asset spend.
+- On a Kaigen project, follow `/kmad-engine`. Do not use a PGP scene or tape.
 
 As you go:
 - `fizzy_toggle_step` each acceptance criterion the moment it passes.
@@ -46,7 +50,8 @@ via `/kmad-story`. Never grow the current card.
 - Run the tests; read your own diff. Game criteria that a player must have
   *done* in the exe go through `/kmad-playtest`, not only `dotnet test`.
 - A public engine change, a new shared behavior, or a game-side copy of
-  something PGP should own goes through `/kmad-engine` so the agent contract,
-  `docs/llms-full.txt`, the example, and docfx move with the code.
+  something the engine should own goes through `/kmad-engine`. On PGP that
+  moves the agent contract, `docs/llms-full.txt`, the example, and docfx
+  with the code. On Kaigen it leaves the installed drop alone.
 - For a large or sensitive diff, run `/kmad-party` or `/code-review` first.
 - `fizzy_close_card`. Done is closing, not a column.

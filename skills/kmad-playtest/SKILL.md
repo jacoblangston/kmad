@@ -1,6 +1,6 @@
 ---
 name: kmad-playtest
-description: 'KMAD playtest — author and run automated play of a PGP game: Given/When/Then mapped onto xUnit, smoke-exit, a JSON input tape the engine exe plays, capture stills, or feel. Use when the user says "kmad playtest", "/kmad-playtest", "playtest", "automate playing the game", "QA the demo", "scripted input", or asks for a game test plan that actually plays.'
+description: 'KMAD playtest — author and run automated play of a PGP game: Given/When/Then mapped onto xUnit, smoke-exit, a JSON input tape the engine exe plays, capture stills, or feel. Use when the user says "kmad playtest", "/kmad-playtest", "playtest", "automate playing the game", "QA the demo", "scripted input", "game feel", "juice", "hit-stop", or "screen shake", or asks for a game test plan that actually plays.'
 ---
 
 # KMAD — Playtest
@@ -19,6 +19,9 @@ Look in this order and treat the first hit as law:
    `--smoke-exit`).
 2. Engine playtest docs / wiki `headless-game-verification`.
 3. Existing `qa/*.json` tapes, shot books, and `*.Core.Tests`.
+
+A project with `hzproject.hzt` is Kaigen. Scripted play is that project's
+`hz-build` skill, not a tape from this one.
 
 PGP games: consume the engine as a package. **Never** invent a Unity / Unreal /
 Godot runner, Reqnroll/SpecFlow, GDS `test-framework`, or a per-game harness.
@@ -70,6 +73,20 @@ is seed + timed input + asserts + optional PNG:
 Put tapes in the game repo (`qa/` or wherever the README already points).
 Do not put game click names in this skill.
 
+## Feel
+The `feel` layer is a human or a Grok-on-PNG judgment. It is never an assert.
+A tape may still assert that the event happened and that a burst spawned.
+
+Give each event a tier so a footstep is not a boss death:
+- **small** — a sound, or a few particles
+- **medium** — sound, particles, and a short camera offset
+- **large** — those, plus a brief hit-stop
+
+Feedback returns to rest. Shake offsets the gameplay camera, not the simulated
+body. Particles spawn from a `socket.<id>` into `ParticlePool`. Squash is a
+transform on a prop. Hit-stop must not freeze the thread that pumps input, the
+playtest injector, and networking. Asset approval stays **ART**.
+
 ## When invoked
 1. Name the exe / SKU and whether the engine playtest flag exists.
 2. List what already runs (`dotnet test`, smoke, capture, tapes).
@@ -87,7 +104,7 @@ Stop at the first rung that holds:
 2. **Is this boot?** `--smoke-exit`.
 3. **Must a player have done it in the exe?** JSON tape + engine playtest.
 4. **Is it a still for art/store?** Capture book. Not a playtest.
-5. **Is it feel?** Manual / Grok-on-PNG. Do not fake it.
+5. **Is it feel?** The tiers under Feel. Manual / Grok-on-PNG. Do not fake it.
 
 ## Refuse
 - A game-local play harness because the engine flag is not shipped yet
@@ -100,5 +117,6 @@ Stop at the first rung that holds:
 ## Party seat
 In `/kmad-party` you are **PLAYTEST**. Open only when the artifact touches
 automated play, input tapes, headless/offscreen harness, smoke-exit, or
-whether a criterion is playable without a human. Stay silent on trailer
-shot lists (that is **CINEMA**). If summoned by name, answer.
+whether a criterion is playable without a human, or whether a hit reads.
+Stay silent on trailer shot lists (that is **CINEMA**) and on asset approval
+(that is **ART**). If summoned by name, answer.
