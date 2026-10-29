@@ -13,10 +13,11 @@ Review, Ready, or Done, and never report those names as missing.
 
 ## Pick the card
 - Card id / title from the invocation args.
-- If none given: take the card already in `In Progress`; if `In Progress` is
-  empty, take the top of `To Do`.
-- **WIP = 1**: if a card is already in `In Progress` and args name a different
-  one, stop and ask — finish the in-flight card first.
+- If none given: pull the next independent card when ready — a card already in
+  `In Progress`, or the top of `To Do`.
+- **No WIP limit**: independent cards may run in parallel. Do not stop because
+  another card is already in `In Progress`. A card that depends on another
+  still waits.
 - Resolve the board from the KMAD binding (`Board:` under the `## KMAD` heading
   in `AGENTS.md`, else `CLAUDE.md`); if absent, `fizzy_list_boards` and ask.
 
