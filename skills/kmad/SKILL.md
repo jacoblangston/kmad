@@ -37,7 +37,7 @@ what's missing.
    the binding every kmad skill reads first.
 
 ## Board
-**To Do** → **In Progress** (WIP=1) → close.
+**To Do** → **In Progress** (no WIP limit; independent cards may run in parallel) → close.
 
 Triage is fizzy's untriaged pile, not a column. Done is closing the card.
 Ready / Building / Review / Done are a mental model, not board furniture —
@@ -62,7 +62,7 @@ names onto To Do / In Progress / close and keep moving.
 3. **Shape (L)** — `/kmad-plan` then `/kmad-architect`; link both docs in the card. Tag `shaping` while untriaged.
 4. **Party (L/risky)** — `/kmad-party` on the architecture; decompose into the cards it names.
 5. **Ready** — write criteria as fizzy steps, confirm Definition of Ready, move card → `To Do`.
-6. **Build** — `/kmad-dev`: move → `In Progress` (WIP=1), code to the criteria only, toggle steps as they pass, log decisions as fizzy comments. New discoveries → new untriaged cards, never scope-creep the current one.
+6. **Build** — `/kmad-dev`: move → `In Progress` (no WIP limit; independent cards may run in parallel), code to the criteria only, toggle steps as they pass, log decisions as fizzy comments. New discoveries → new untriaged cards, never scope-creep the current one.
 7. **Review** — self-review + tests; `/kmad-party` or `/code-review` if the diff earns it. Stay in `In Progress`.
 8. **Done** — `fizzy_close_card`.
 
